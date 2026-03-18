@@ -26,6 +26,21 @@ export default function ProductShowcase() {
   return (
     <section id="product" className="py-20 bg-navy">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Branding Banner */}
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.7 }}
+          className="mb-12 rounded-2xl overflow-hidden shadow-2xl border border-white/10"
+        >
+          <img
+            src="/assets/uploads/IMG-20260310-WA0018-2.jpg"
+            alt="Madhav Solar Energy – Waaree Authorized Partner"
+            className="w-full h-auto object-cover"
+          />
+        </motion.div>
+
         {/* Authorized badge */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
@@ -78,27 +93,36 @@ export default function ProductShowcase() {
             </Button>
           </motion.div>
 
-          {/* Right — product image */}
+          {/* Right — product images */}
           <motion.div
             initial={{ opacity: 0, x: 32 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.7 }}
-            className="relative"
+            className="relative flex flex-col gap-6"
           >
+            {/* Original promo image */}
             <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-white/10">
               <img
                 src="/assets/uploads/IMG-20260309-WA0084-1.jpg"
                 alt="WAAREE TOPCON 580 Solar Panel"
                 className="w-full h-auto object-cover"
               />
-              {/* Glow overlay */}
               <div className="absolute inset-0 bg-gradient-to-t from-navy/60 via-transparent to-transparent" />
               <div className="absolute bottom-4 left-4 right-4">
                 <span className="inline-block bg-gold text-navy text-xs font-black px-3 py-1 rounded-full uppercase tracking-widest">
                   Best Quality · Best Rate · Best Service
                 </span>
               </div>
+            </div>
+
+            {/* New product details image */}
+            <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-white/10">
+              <img
+                src="/assets/uploads/unnamed-2026-03-16T135139.305-1.jpg"
+                alt="WAAREE TOPCON 580 – સોલાર પેનલ સ્ટ્રક્ચર વિગતો"
+                className="w-full h-auto object-cover"
+              />
             </div>
           </motion.div>
         </div>

@@ -51,6 +51,32 @@ export default function Hero() {
           <p className="text-xl sm:text-2xl text-gold/90 font-semibold mb-4">
             Powering a Greener Tomorrow
           </p>
+
+          {/* Gujarati Tagline Poem */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, delay: 0.4, ease: "easeOut" }}
+            className="my-6 mx-auto max-w-2xl bg-white/10 backdrop-blur-sm border border-gold/30 rounded-2xl px-6 py-5"
+          >
+            <p
+              className="text-base sm:text-lg text-white/95 font-medium leading-relaxed"
+              style={{ fontFamily: "'Noto Sans Gujarati', sans-serif" }}
+            >
+              હે... અમરેલીના આંગણે નવો ઉજાસ રે,
+              <br />
+              <span className="text-gold font-semibold">
+                માધવ સોલાર લાવ્યું સુખનો પ્રકાસ!
+              </span>
+              <br />
+              વીજળી વરસે, ટેન્શન સરસે...
+              <br />
+              <span className="text-orange font-bold text-xl">
+                બોલો... માધવ સોલારની જય હો!
+              </span>
+            </p>
+          </motion.div>
+
           <p className="text-base sm:text-lg text-white/80 max-w-2xl mx-auto mb-4 font-light">
             Featuring <strong className="text-white">WAAREE TOPCON 580</strong>{" "}
             — High Efficiency Solar Modules. Best Quality · Best Rate · Best
