@@ -1,0 +1,72 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --radius: 0.5rem;
+
+    /* MADHV Solar Brand Palette — OKLCH */
+    /* Navy #0B2A44 */
+    --navy: 0.225 0.058 239;
+    /* Teal #1F7A8C */
+    --teal: 0.515 0.095 210;
+    /* Orange CTA #F4A12A */
+    --orange: 0.75 0.158 60;
+    /* Gold #F5C542 */
+    --gold: 0.82 0.162 85;
+    /* Page bg #F6F8FB */
+    --page-bg: 0.972 0.008 230;
+    /* Testimonials band #E9F4FB */
+    --band-bg: 0.952 0.018 220;
+
+    /* Semantic tokens */
+    --background: var(--page-bg);
+    --foreground: var(--navy);
+    --card: 1 0 0;
+    --card-foreground: var(--navy);
+    --popover: 1 0 0;
+    --popover-foreground: var(--navy);
+    --primary: var(--navy);
+    --primary-foreground: 1 0 0;
+    --secondary: var(--teal);
+    --secondary-foreground: 1 0 0;
+    --muted: 0.95 0.01 230;
+    --muted-foreground: 0.48 0.03 230;
+    --accent: var(--orange);
+    --accent-foreground: 1 0 0;
+    --destructive: 0.577 0.245 27.325;
+    --destructive-foreground: 0.985 0 0;
+    --border: 0.88 0.02 230;
+    --input: 0.88 0.02 230;
+    --ring: var(--teal);
+    --chart-1: var(--orange);
+    --chart-2: var(--teal);
+    --chart-3: var(--navy);
+    --chart-4: var(--gold);
+    --chart-5: 0.646 0.222 41.116;
+    --sidebar: 1 0 0;
+    --sidebar-foreground: var(--navy);
+    --sidebar-primary: var(--navy);
+    --sidebar-primary-foreground: 1 0 0;
+    --sidebar-accent: var(--page-bg);
+    --sidebar-accent-foreground: var(--navy);
+    --sidebar-border: 0.88 0.02 230;
+    --sidebar-ring: var(--teal);
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: "Inter", sans-serif;
+  }
+}
