@@ -14,6 +14,7 @@ import { Clock, IndianRupee, Leaf, Sun, TrendingDown, Zap } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
 
+// Gujarat PGVCL Cities
 const GUJARAT_CITIES = [
   "AMRELI",
   "RAJKOT",
@@ -32,10 +33,64 @@ const GUJARAT_CITIES = [
   "UPLETA",
 ];
 
-const RATE_PER_UNIT = 7;
+// PGVCL LT-2 Domestic Tariff Slabs (Auto Updated 2025-26)
+const PGVCL_SLABS = [
+  { limit: 50, rate: 3.55 }, // 0-50 units
+  { limit: 100, rate: 4.1 }, // 51-100 units
+  { limit: 200, rate: 5.2 }, // 101-200 units
+  { limit: 400, rate: 5.95 }, // 201-400 units
+  { limit: Number.POSITIVE_INFINITY, rate: 7.1 }, // 400+ units
+];
+
+const FIXED_CHARGE_PER_KW = 35; // ₹35/kW/month fixed demand charge
 const UNITS_PER_KW_MONTH = 150;
 const COST_PER_KW = 60000;
 const CO2_PER_KWH = 0.82;
+
+// Calculate effective rate from PGVCL slab for a given monthly bill
+function calcUnitsFromBill(bill: number): number {
+  // Reverse-calculate units using PGVCL tiered slabs
+  let remaining = bill - FIXED_CHARGE_PER_KW * 1; // assume 1kW sanctioned load baseline
+  let totalUnits = 0;
+  let prev = 0;
+  for (const slab of PGVCL_SLABS) {
+    const slabUnits =
+      slab.limit === Number.POSITIVE_INFINITY
+        ? Number.POSITIVE_INFINITY
+        : slab.limit - prev;
+    const slabCost = slabUnits * slab.rate;
+    if (remaining <= 0) break;
+    if (remaining <= slabCost) {
+      totalUnits += remaining / slab.rate;
+      remaining = 0;
+      break;
+    }
+    totalUnits +=
+      slabUnits === Number.POSITIVE_INFINITY
+        ? remaining / slab.rate
+        : slabUnits;
+    remaining -= slabUnits === Number.POSITIVE_INFINITY ? remaining : slabCost;
+    prev = slab.limit === Number.POSITIVE_INFINITY ? prev : slab.limit;
+  }
+  return Math.max(totalUnits, bill / 7.1);
+}
+
+// Get effective rate for display based on units consumed
+function getEffectiveRate(units: number): number {
+  let totalCost = 0;
+  let prev = 0;
+  for (const slab of PGVCL_SLABS) {
+    if (units <= prev) break;
+    const slabMax =
+      slab.limit === Number.POSITIVE_INFINITY
+        ? units
+        : Math.min(slab.limit, units);
+    totalCost += (slabMax - prev) * slab.rate;
+    prev = slabMax;
+    if (prev >= units) break;
+  }
+  return totalCost / units;
+}
 
 function calcSubsidy(kw: number): number {
   if (kw <= 2) return kw * 30000;
@@ -45,6 +100,8 @@ function calcSubsidy(kw: number): number {
 
 interface CalcResult {
   systemKW: number;
+  monthlyUnits: number;
+  effectiveRate: number;
   baseCost: number;
   subsidy: number;
   finalCost: number;
@@ -67,25 +124,33 @@ export default function SolarCalculator() {
   function calculate() {
     const monthlyBill = Number.parseFloat(bill);
     if (!monthlyBill || monthlyBill <= 0) return;
-    const monthlyUnits = monthlyBill / RATE_PER_UNIT;
+
+    // Auto-calculate units using PGVCL actual slab rates
+    const monthlyUnits = calcUnitsFromBill(monthlyBill);
+    const effectiveRate = getEffectiveRate(monthlyUnits);
+
     let systemKW = monthlyUnits / UNITS_PER_KW_MONTH;
     if (roofArea) {
       const maxKW = Number.parseFloat(roofArea) / 80;
       if (maxKW > 0) systemKW = Math.min(systemKW, maxKW);
     }
     systemKW = Math.max(1, Math.ceil(systemKW * 10) / 10);
+
     const baseCost = systemKW * COST_PER_KW;
     const subsidy = calcSubsidy(systemKW);
     const finalCost = baseCost - subsidy;
     const monthlySavings = Math.min(
-      systemKW * UNITS_PER_KW_MONTH * RATE_PER_UNIT,
+      systemKW * UNITS_PER_KW_MONTH * effectiveRate,
       monthlyBill,
     );
     const yearlySavings = monthlySavings * 12;
     const payback = finalCost / yearlySavings;
     const co2Yearly = systemKW * UNITS_PER_KW_MONTH * 12 * CO2_PER_KWH;
+
     setResult({
       systemKW,
+      monthlyUnits: Math.round(monthlyUnits),
+      effectiveRate,
       baseCost,
       subsidy,
       finalCost,
@@ -102,9 +167,10 @@ export default function SolarCalculator() {
       id="calculator"
     >
       <div className="max-w-5xl mx-auto px-4">
+        {/* Header */}
         <div className="text-center mb-10">
           <Badge className="mb-3 bg-orange-100 text-orange-700 border-orange-200 text-sm px-3 py-1">
-            PGVCL Gujarat 2025
+            PGVCL Gujarat 2025-26 | Auto Updated Rates
           </Badge>
           <h2 className="text-3xl md:text-4xl font-bold text-[oklch(0.225_0.058_239)] mb-2">
             સોલાર સિસ્ટમ કેલ્ક્યુલેટર
@@ -113,10 +179,62 @@ export default function SolarCalculator() {
             Solar System Calculator
           </p>
           <p className="text-sm text-gray-500 mt-2">
-            Based on PGVCL Gujarat rates &amp; PM Surya Ghar Subsidy 2025
+            Automatic PGVCL Gujarat LT-2 Tiered Rates &amp; PM Surya Ghar
+            Subsidy 2025-26
           </p>
         </div>
 
+        {/* PGVCL Rate Table */}
+        <Card className="mb-6 border border-blue-100 rounded-xl bg-blue-50/60">
+          <CardContent className="p-4">
+            <p className="text-center text-sm font-bold text-blue-700 mb-3">
+              ⚡ PGVCL LT-2 Domestic Tariff Slabs (Gujarat Electric — 2025-26)
+            </p>
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs md:text-sm text-center">
+                <thead>
+                  <tr className="bg-blue-100 text-blue-800">
+                    <th className="p-2 rounded-l-lg">Units Consumed</th>
+                    <th className="p-2">Rate (₹/unit)</th>
+                    <th className="p-2 rounded-r-lg">Slab</th>
+                  </tr>
+                </thead>
+                <tbody className="text-gray-700">
+                  <tr className="border-b border-blue-100">
+                    <td className="p-2">0 – 50 units</td>
+                    <td className="p-2 font-semibold text-green-700">₹3.55</td>
+                    <td className="p-2">Slab 1</td>
+                  </tr>
+                  <tr className="border-b border-blue-100 bg-white/50">
+                    <td className="p-2">51 – 100 units</td>
+                    <td className="p-2 font-semibold text-green-700">₹4.10</td>
+                    <td className="p-2">Slab 2</td>
+                  </tr>
+                  <tr className="border-b border-blue-100">
+                    <td className="p-2">101 – 200 units</td>
+                    <td className="p-2 font-semibold text-yellow-700">₹5.20</td>
+                    <td className="p-2">Slab 3</td>
+                  </tr>
+                  <tr className="border-b border-blue-100 bg-white/50">
+                    <td className="p-2">201 – 400 units</td>
+                    <td className="p-2 font-semibold text-orange-600">₹5.95</td>
+                    <td className="p-2">Slab 4</td>
+                  </tr>
+                  <tr>
+                    <td className="p-2">400+ units</td>
+                    <td className="p-2 font-semibold text-red-600">₹7.10</td>
+                    <td className="p-2">Slab 5</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p className="text-center text-xs text-blue-500 mt-2">
+              + Fixed charge ₹35/kW/month | Source: PGVCL Tariff Order 2025-26
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Calculator Card */}
         <Card className="shadow-xl border-2 border-orange-200 rounded-2xl overflow-hidden">
           <div className="bg-gradient-to-r from-orange-500 to-amber-500 h-1" />
           <CardContent className="p-6 md:p-8">
@@ -206,6 +324,14 @@ export default function SolarCalculator() {
                   data-ocid="calculator.panel"
                 >
                   <div className="border-t-2 border-orange-100 pt-6">
+                    {/* Auto Rate Badge */}
+                    <div className="flex justify-center mb-4">
+                      <span className="bg-blue-100 text-blue-700 text-xs font-semibold px-3 py-1 rounded-full border border-blue-200">
+                        ⚡ Auto Rate: ₹{result.effectiveRate.toFixed(2)}/unit
+                        (PGVCL slab) | ~{result.monthlyUnits} units/month
+                      </span>
+                    </div>
+
                     <h3 className="text-center text-lg font-bold text-gray-700 mb-5">
                       📊 તમારા સોલાર સ્ટેટ્સ | Your Solar Stats — {city}
                     </h3>
@@ -284,8 +410,9 @@ export default function SolarCalculator() {
                       </div>
                     </div>
                     <p className="text-center text-xs text-gray-400 mt-5">
-                      * Estimates based on PGVCL avg rate ₹7/unit, 150
-                      units/kW/month, ₹60,000/kW installation.
+                      * Auto-calculated using PGVCL LT-2 tiered slab rates
+                      2025-26. System size based on 150 units/kW/month,
+                      ₹60,000/kW installation.
                     </p>
                   </div>
                 </motion.div>

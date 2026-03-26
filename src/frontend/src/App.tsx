@@ -6,6 +6,7 @@ import Header from "./components/Header";
 import Hero from "./components/Hero";
 import ProductShowcase from "./components/ProductShowcase";
 import Services from "./components/Services";
+import SiteSurvey from "./components/SiteSurvey";
 import SolarCalculator from "./components/SolarCalculator";
 import Testimonials from "./components/Testimonials";
 import WhyChooseUs from "./components/WhyChooseUs";
@@ -21,6 +22,7 @@ export default function App() {
           <Hero />
           <ProductShowcase />
           <SolarCalculator />
+          <SiteSurvey />
           <Services />
           <WhyChooseUs />
           <Testimonials />
