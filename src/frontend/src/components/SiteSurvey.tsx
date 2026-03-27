@@ -18,10 +18,12 @@ import {
   Home,
   Loader2,
   MapPin,
+  MessageCircle,
   Phone,
   RefreshCw,
   RotateCcw,
   Sun,
+  Upload,
   Zap,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
@@ -45,7 +47,6 @@ const GUJARAT_CITIES = [
   "UPLETA",
 ];
 
-// Approximate lat/lng for Gujarat cities
 const CITY_COORDS: Record<string, { lat: number; lng: number }> = {
   AMRELI: { lat: 21.6035, lng: 71.2219 },
   RAJKOT: { lat: 22.3039, lng: 70.8022 },
@@ -77,7 +78,6 @@ function findNearestCity(lat: number, lng: number): string {
   return nearest;
 }
 
-// PGVCL LT-2 slab calculation
 const PGVCL_SLABS = [
   { limit: 50, rate: 3.55 },
   { limit: 100, rate: 4.1 },
@@ -88,8 +88,7 @@ const PGVCL_SLABS = [
 
 function calcSolarPlan(monthlyBill: number) {
   if (!monthlyBill || monthlyBill <= 0) return null;
-  // Estimate units from bill using slabs iteratively
-  let units = monthlyBill / 5; // rough initial
+  let units = monthlyBill / 5;
   for (let i = 0; i < 10; i++) {
     let bill = 0;
     let rem = units;
@@ -134,7 +133,6 @@ function fmt(n: number) {
   return `₹${n.toLocaleString("en-IN")}`;
 }
 
-// Step indicator
 function StepIndicator({ current }: { current: number }) {
   const steps = [
     { label: "Location", icon: MapPin },
@@ -344,6 +342,7 @@ function Step2Camera({
     format: "image/jpeg",
   });
   const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleCapture = async () => {
     const file = await capturePhoto();
@@ -356,8 +355,17 @@ function Step2Camera({
 
   const handleRetake = () => {
     setCapturedPhoto(null);
-    startCamera();
   };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const url = URL.createObjectURL(file);
+      setCapturedPhoto(url);
+    }
+  };
+
+  const showOptions = !isActive && !isLoading && !capturedPhoto;
 
   return (
     <div className="space-y-5">
@@ -367,13 +375,14 @@ function Step2Camera({
         </div>
         <h3 className="text-xl font-bold text-gray-800">Site Photo</h3>
         <p className="text-gray-500 text-sm">
-          📸 Take a photo of your rooftop or installation area
+          📸 Take or upload a photo of your rooftop or installation area
         </p>
       </div>
 
       {isSupported === false ? (
         <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 text-center text-yellow-700">
-          Camera not supported on this browser. You can skip this step.
+          Camera not supported on this browser. You can upload a photo or skip
+          this step.
         </div>
       ) : capturedPhoto ? (
         <motion.div
@@ -388,51 +397,84 @@ function Step2Camera({
               className="w-full object-cover"
             />
             <div className="absolute top-2 right-2">
-              <Badge className="bg-green-500 text-white">✓ Captured</Badge>
+              <Badge className="bg-green-500 text-white">✓ Photo Ready</Badge>
             </div>
           </div>
         </motion.div>
       ) : (
         <div className="space-y-3">
-          <div
-            className="relative rounded-2xl overflow-hidden bg-black shadow-lg"
-            style={{ minHeight: "240px" }}
-          >
-            <video
-              ref={videoRef}
-              className="w-full h-full object-cover"
-              style={{ minHeight: "240px", maxHeight: "360px" }}
-              playsInline
-              muted
-              autoPlay
-            />
-            {!isActive && !isLoading && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-900/80 text-white gap-3">
-                <Camera className="w-12 h-12 opacity-50" />
-                <p className="text-sm opacity-75">
-                  Camera preview will appear here
-                </p>
-              </div>
-            )}
-            {isLoading && (
-              <div className="absolute inset-0 flex items-center justify-center bg-gray-900/80">
-                <Loader2 className="w-8 h-8 text-white animate-spin" />
-              </div>
-            )}
-          </div>
+          {/* Camera preview when active */}
+          {(isActive || isLoading) && (
+            <div
+              className="relative rounded-2xl overflow-hidden bg-black shadow-lg"
+              style={{ minHeight: "240px" }}
+            >
+              <video
+                ref={videoRef}
+                className="w-full h-full object-cover"
+                style={{ minHeight: "240px", maxHeight: "360px" }}
+                playsInline
+                muted
+                autoPlay
+              />
+              {isLoading && (
+                <div className="absolute inset-0 flex items-center justify-center bg-gray-900/80">
+                  <Loader2 className="w-8 h-8 text-white animate-spin" />
+                </div>
+              )}
+            </div>
+          )}
+
           <canvas ref={canvasRef} className="hidden" />
+
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-red-600 text-sm text-center">
               {error.message}
             </div>
           )}
-          {!isActive && !isLoading && (
+
+          {/* Side-by-side options when camera not active */}
+          {showOptions && (
+            <div className="grid grid-cols-2 gap-3">
+              <Button
+                data-ocid="survey.camera.start_button"
+                onClick={startCamera}
+                className="h-20 flex-col gap-2 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-semibold"
+              >
+                <Camera className="w-6 h-6" />
+                <span className="text-sm">Open Camera</span>
+              </Button>
+
+              <Button
+                data-ocid="survey.camera.upload_button"
+                onClick={() => fileInputRef.current?.click()}
+                variant="outline"
+                className="h-20 flex-col gap-2 border-2 border-dashed border-blue-300 text-blue-600 hover:bg-blue-50 rounded-xl font-semibold"
+              >
+                <Upload className="w-6 h-6" />
+                <span className="text-sm">Upload Photo</span>
+              </Button>
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                className="hidden"
+                onChange={handleFileUpload}
+              />
+            </div>
+          )}
+
+          {/* Capture button when camera is active */}
+          {isActive && (
             <Button
-              data-ocid="survey.camera.start_button"
-              onClick={startCamera}
-              className="w-full h-12 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-semibold"
+              data-ocid="survey.camera.capture_button"
+              onClick={handleCapture}
+              disabled={!isActive || isLoading}
+              className="w-full h-12 bg-red-500 hover:bg-red-600 text-white rounded-xl font-semibold"
             >
-              <Camera className="mr-2 w-4 h-4" /> Open Camera
+              <Camera className="mr-2 w-4 h-4" /> Take Photo
             </Button>
           )}
         </div>
@@ -466,26 +508,14 @@ function Step2Camera({
             </Button>
           </>
         ) : (
-          <>
-            {isActive && (
-              <Button
-                data-ocid="survey.camera.capture_button"
-                onClick={handleCapture}
-                disabled={!isActive || isLoading}
-                className="flex-1 h-12 bg-red-500 hover:bg-red-600 text-white rounded-xl font-semibold"
-              >
-                <Camera className="mr-2 w-4 h-4" /> Take Photo
-              </Button>
-            )}
-            <Button
-              data-ocid="survey.camera.skip_button"
-              variant="outline"
-              onClick={() => onNext("")}
-              className="flex-1 h-12 rounded-xl text-gray-500"
-            >
-              Skip →
-            </Button>
-          </>
+          <Button
+            data-ocid="survey.camera.skip_button"
+            variant="outline"
+            onClick={() => onNext("")}
+            className="flex-1 h-12 rounded-xl text-gray-500"
+          >
+            Skip →
+          </Button>
         )}
       </div>
     </div>
@@ -622,6 +652,11 @@ function Step4Plan({
     window.print();
   };
 
+  const whatsappText = encodeURIComponent(
+    `Hi, I want a solar plan for ${city}, Gujarat. System size: ${plan.systemKW}kW, Monthly savings: ${fmt(plan.monthlySavings)}`,
+  );
+  const whatsappUrl = `https://wa.me/919428787879?text=${whatsappText}`;
+
   return (
     <div className="space-y-5">
       <div className="text-center space-y-1">
@@ -748,6 +783,7 @@ function Step4Plan({
         </div>
       </div>
 
+      {/* Action Buttons */}
       <div className="flex gap-3">
         <Button
           data-ocid="survey.plan.start_over_button"
@@ -765,6 +801,18 @@ function Step4Plan({
           <Download className="mr-2 w-4 h-4" /> Download Plan
         </Button>
       </div>
+
+      {/* WhatsApp Button */}
+      <a
+        data-ocid="survey.plan.button"
+        href={whatsappUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center justify-center gap-2 w-full h-12 rounded-xl font-semibold text-white bg-[#25D366] hover:bg-[#1ebe5d] transition-colors shadow-md"
+      >
+        <MessageCircle className="w-5 h-5" />
+        Send via WhatsApp
+      </a>
     </div>
   );
 }
@@ -797,9 +845,14 @@ export default function SiteSurvey() {
           viewport={{ once: true }}
           className="text-center mb-10"
         >
-          <Badge className="bg-green-100 text-green-700 border-green-300 mb-3 text-sm px-3 py-1">
-            🏠 New Feature
-          </Badge>
+          <div className="flex items-center justify-center gap-2 mb-3">
+            <Badge className="bg-green-100 text-green-700 border-green-300 text-sm px-3 py-1">
+              🏠 New Feature
+            </Badge>
+            <Badge className="bg-emerald-500 text-white border-emerald-600 text-sm px-3 py-1">
+              ✅ Fully Interactive
+            </Badge>
+          </div>
           <h2 className="text-3xl font-black text-gray-800 mb-2">
             Site Survey & <span className="text-orange-500">Solar Plan</span>
           </h2>

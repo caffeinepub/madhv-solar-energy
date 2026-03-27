@@ -41,6 +41,29 @@ export default function ProductShowcase() {
           />
         </motion.div>
 
+        {/* NEW: Gujarati Marketing Banner */}
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.7, delay: 0.15 }}
+          className="mb-12 rounded-2xl overflow-hidden shadow-2xl border-2 border-gold/30 relative"
+        >
+          <img
+            src="/assets/uploads/unnamed_-_2026-03-17t013808.108-019d2c26-8a8e-72ab-9aa1-57940884ae0c-1.jpg"
+            alt="WAAREE TOPCON 580W – નવી ગુજરાતી મારકેટિંગ"
+            className="w-full h-auto object-cover"
+          />
+          <div className="absolute top-3 left-3 flex gap-2">
+            <span className="bg-gold text-navy text-xs font-black px-3 py-1 rounded-full uppercase tracking-widest">
+              WAAREE TOPCON 580W
+            </span>
+            <span className="bg-orange/90 text-white text-xs font-bold px-3 py-1 rounded-full">
+              New Gujarati Marketing
+            </span>
+          </div>
+        </motion.div>
+
         {/* Authorized badge */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}

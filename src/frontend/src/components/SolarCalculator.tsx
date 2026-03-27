@@ -35,22 +35,20 @@ const GUJARAT_CITIES = [
 
 // PGVCL LT-2 Domestic Tariff Slabs (Auto Updated 2025-26)
 const PGVCL_SLABS = [
-  { limit: 50, rate: 3.55 }, // 0-50 units
-  { limit: 100, rate: 4.1 }, // 51-100 units
-  { limit: 200, rate: 5.2 }, // 101-200 units
-  { limit: 400, rate: 5.95 }, // 201-400 units
-  { limit: Number.POSITIVE_INFINITY, rate: 7.1 }, // 400+ units
+  { limit: 50, rate: 3.55 },
+  { limit: 100, rate: 4.1 },
+  { limit: 200, rate: 5.2 },
+  { limit: 400, rate: 5.95 },
+  { limit: Number.POSITIVE_INFINITY, rate: 7.1 },
 ];
 
-const FIXED_CHARGE_PER_KW = 35; // ₹35/kW/month fixed demand charge
+const FIXED_CHARGE_PER_KW = 35;
 const UNITS_PER_KW_MONTH = 150;
 const COST_PER_KW = 60000;
 const CO2_PER_KWH = 0.82;
 
-// Calculate effective rate from PGVCL slab for a given monthly bill
 function calcUnitsFromBill(bill: number): number {
-  // Reverse-calculate units using PGVCL tiered slabs
-  let remaining = bill - FIXED_CHARGE_PER_KW * 1; // assume 1kW sanctioned load baseline
+  let remaining = bill - FIXED_CHARGE_PER_KW * 1;
   let totalUnits = 0;
   let prev = 0;
   for (const slab of PGVCL_SLABS) {
@@ -75,7 +73,6 @@ function calcUnitsFromBill(bill: number): number {
   return Math.max(totalUnits, bill / 7.1);
 }
 
-// Get effective rate for display based on units consumed
 function getEffectiveRate(units: number): number {
   let totalCost = 0;
   let prev = 0;
@@ -109,6 +106,7 @@ interface CalcResult {
   yearlySavings: number;
   payback: number;
   co2Yearly: number;
+  avgBill: number;
 }
 
 function fmt(n: number): string {
@@ -116,17 +114,18 @@ function fmt(n: number): string {
 }
 
 export default function SolarCalculator() {
-  const [bill, setBill] = useState("");
+  const [bill1, setBill1] = useState("");
   const [city, setCity] = useState("AMRELI");
   const [roofArea, setRoofArea] = useState("");
   const [result, setResult] = useState<CalcResult | null>(null);
 
   function calculate() {
-    const monthlyBill = Number.parseFloat(bill);
-    if (!monthlyBill || monthlyBill <= 0) return;
+    const b1 = Number.parseFloat(bill1);
+    if (!b1 || b1 <= 0) return;
 
-    // Auto-calculate units using PGVCL actual slab rates
-    const monthlyUnits = calcUnitsFromBill(monthlyBill);
+    const avgBill = b1;
+
+    const monthlyUnits = calcUnitsFromBill(avgBill);
     const effectiveRate = getEffectiveRate(monthlyUnits);
 
     let systemKW = monthlyUnits / UNITS_PER_KW_MONTH;
@@ -141,7 +140,7 @@ export default function SolarCalculator() {
     const finalCost = baseCost - subsidy;
     const monthlySavings = Math.min(
       systemKW * UNITS_PER_KW_MONTH * effectiveRate,
-      monthlyBill,
+      avgBill,
     );
     const yearlySavings = monthlySavings * 12;
     const payback = finalCost / yearlySavings;
@@ -158,13 +157,14 @@ export default function SolarCalculator() {
       yearlySavings,
       payback,
       co2Yearly,
+      avgBill,
     });
   }
 
   return (
     <section
       className="py-16 bg-gradient-to-b from-amber-50 to-orange-50"
-      id="calculator"
+      id="solar-calculator"
     >
       <div className="max-w-5xl mx-auto px-4">
         {/* Header */}
@@ -238,25 +238,27 @@ export default function SolarCalculator() {
         <Card className="shadow-xl border-2 border-orange-200 rounded-2xl overflow-hidden">
           <div className="bg-gradient-to-r from-orange-500 to-amber-500 h-1" />
           <CardContent className="p-6 md:p-8">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
-              <div className="space-y-2">
-                <Label
-                  htmlFor="monthly-bill"
-                  className="font-semibold text-gray-700"
-                >
-                  <IndianRupee className="inline w-4 h-4 mr-1 text-orange-500" />
-                  Monthly Electricity Bill (₹)
-                </Label>
-                <Input
-                  id="monthly-bill"
-                  type="number"
-                  placeholder="e.g. 5000"
-                  value={bill}
-                  onChange={(e) => setBill(e.target.value)}
-                  className="border-orange-200 focus-visible:ring-orange-400 text-lg"
-                  data-ocid="calculator.input"
-                />
-              </div>
+            {/* Single Bill Input */}
+            <div className="mb-5 space-y-2">
+              <Label
+                htmlFor="bill-month1"
+                className="font-semibold text-gray-700 flex items-center gap-2"
+              >
+                <IndianRupee className="w-4 h-4 text-orange-500" />
+                Monthly Electricity Bill (₹)
+              </Label>
+              <Input
+                id="bill-month1"
+                type="number"
+                placeholder="e.g. 4500"
+                value={bill1}
+                onChange={(e) => setBill1(e.target.value)}
+                className="border-orange-200 focus-visible:ring-orange-400 text-lg"
+                data-ocid="calculator.input"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
               <div className="space-y-2">
                 <Label
                   htmlFor="city-select"
@@ -297,7 +299,7 @@ export default function SolarCalculator() {
                   value={roofArea}
                   onChange={(e) => setRoofArea(e.target.value)}
                   className="border-orange-200 focus-visible:ring-orange-400"
-                  data-ocid="calculator.roof_input"
+                  data-ocid="calculator.input"
                 />
               </div>
             </div>
@@ -325,7 +327,7 @@ export default function SolarCalculator() {
                 >
                   <div className="border-t-2 border-orange-100 pt-6">
                     {/* Auto Rate Badge */}
-                    <div className="flex justify-center mb-4">
+                    <div className="flex flex-wrap justify-center gap-2 mb-4">
                       <span className="bg-blue-100 text-blue-700 text-xs font-semibold px-3 py-1 rounded-full border border-blue-200">
                         ⚡ Auto Rate: ₹{result.effectiveRate.toFixed(2)}/unit
                         (PGVCL slab) | ~{result.monthlyUnits} units/month
