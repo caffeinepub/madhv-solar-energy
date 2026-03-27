@@ -22,6 +22,9 @@ import {
 import { AnimatePresence, motion } from "motion/react";
 import { useRef, useState } from "react";
 
+const QUOTATION_BROCHURE =
+  "/assets/uploads/img-20260316-wa0054_1-019d303f-abe9-77ee-86a7-4c4e3e769936-1.jpg";
+
 // Gujarat PGVCL Cities
 const GUJARAT_CITIES = [
   "AMRELI",
@@ -656,6 +659,18 @@ export default function SolarCalculator() {
                   </div>
                 </div>
 
+                {/* Price Brochure Image */}
+                <div className="px-6 pt-4">
+                  <p className="text-xs font-bold text-green-700 mb-2 text-center">
+                    📋 Madhav Solar Energy — Price Chart (Waaree TOPCON 580W)
+                  </p>
+                  <img
+                    src={QUOTATION_BROCHURE}
+                    alt="Solar System Price Chart"
+                    className="w-full rounded-xl border border-green-100 shadow-md"
+                  />
+                </div>
+
                 {/* Itemized Table */}
                 <div className="px-6 py-4">
                   <table className="w-full text-sm">
@@ -727,6 +742,31 @@ export default function SolarCalculator() {
                       </tr>
                     </tbody>
                   </table>
+                </div>
+
+                {/* What's Included in System */}
+                <div className="mx-6 mb-4 bg-green-50 border border-green-200 rounded-xl p-4">
+                  <h4 className="text-sm font-bold text-green-800 mb-3 text-center flex items-center justify-center gap-2">
+                    <span>✅</span> આ સિસ્ટમમાં શું શું મળશે?
+                  </h4>
+                  <ul className="grid grid-cols-1 gap-1.5">
+                    {[
+                      "🔩 એપોલો કંપનીની ISI માર્કાવાળી હોટ-ડીપ ગેલ્વેનાઈઝ પાઈપ",
+                      "⚡ V-Sole Inverter (10 વર્ષ ની વોરેન્ટી)",
+                      "🔌 પોલીકેબ વાયર (4 sq mm)",
+                      "🛠️ 100% સર્વિસ સપોર્ટ | 5 વર્ષ ફ્રી સર્વિસ",
+                      "☀️ 30 વર્ષ સોલાર મોડ્યુલ આઉટપુટ વોરંટી",
+                      "📐 સ્ટ્રક્ચર: આગળ ૩ ફૂટ | પાછળ ૫ ફૂટ",
+                      "🎁 અને હજુ ઘણું બધું...",
+                    ].map((item) => (
+                      <li
+                        key={item.slice(0, 10)}
+                        className="text-xs text-green-900 bg-white/60 rounded-lg px-3 py-1.5 font-medium"
+                      >
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
 
                 {/* Footer Note */}

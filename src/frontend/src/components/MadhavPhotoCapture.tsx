@@ -3,6 +3,23 @@ import { useCallback, useEffect, useRef, useState } from "react";
 const MAULIK = "+91 9428787879";
 const ASHWIN = "+91 95741 66656";
 
+const GUJARAT_CITIES = [
+  "AMRELI",
+  "RAJKOT",
+  "JAMNAGAR",
+  "JUNAGADH",
+  "BHAVNAGAR",
+  "SURENDRANAGAR",
+  "PORBANDAR",
+  "ANAND",
+  "VADODARA",
+  "SURAT",
+  "AHMEDABAD",
+  "GANDHINAGAR",
+  "MEHSANA",
+  "BOTAD",
+];
+
 function stopTracks(s: MediaStream | null) {
   if (!s) return;
   for (const t of s.getTracks()) t.stop();
@@ -35,6 +52,10 @@ export default function MadhavPhotoCapture() {
   const [facingMode, setFacingMode] = useState<"user" | "environment">(
     "environment",
   );
+  const [customerName, setCustomerName] = useState("");
+  const [customerCity, setCustomerCity] = useState("");
+  const [cityInput, setCityInput] = useState("");
+  const [showCityDropdown, setShowCityDropdown] = useState(false);
   const autoStartedRef = useRef(false);
 
   useEffect(() => {
@@ -58,7 +79,7 @@ export default function MadhavPhotoCapture() {
                 `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`,
             );
           } catch {
-            setLocation(`${latitude.toFixed(4)}°N, ${longitude.toFixed(4)}°E`);
+            setLocation(`${latitude.toFixed(4)}N, ${longitude.toFixed(4)}E`);
           }
         },
         () => setLocation("Location unavailable"),
@@ -95,7 +116,6 @@ export default function MadhavPhotoCapture() {
   useEffect(() => {
     if (!autoStartedRef.current) {
       autoStartedRef.current = true;
-      // Use "environment" directly to avoid stale closure on facingMode
       setCameraError(null);
       navigator.mediaDevices
         ?.getUserMedia({ video: { facingMode: "environment" }, audio: false })
@@ -113,7 +133,7 @@ export default function MadhavPhotoCapture() {
           );
         });
     }
-  }, []); // run once on mount
+  }, []);
 
   const stopCamera = useCallback(() => {
     stopTracks(stream);
@@ -150,7 +170,7 @@ export default function MadhavPhotoCapture() {
 
     ctx.drawImage(video, 0, 0, W, H);
 
-    const barH = Math.max(70, H * 0.16);
+    const barH = Math.max(90, H * 0.2);
     ctx.fillStyle = "rgba(0,0,0,0.62)";
     ctx.fillRect(0, H - barH, W, barH);
 
@@ -160,18 +180,34 @@ export default function MadhavPhotoCapture() {
     const now = new Date();
     const baseFontSize = Math.max(11, W * 0.027);
 
+    // Title
     ctx.font = `bold ${baseFontSize * 1.25}px Arial`;
     ctx.fillStyle = "#22c55e";
     ctx.fillText("☀ MADHAV SOLAR ENERGY", 12, H - barH + baseFontSize * 1.45);
 
+    // Customer name & city
+    if (customerName || customerCity) {
+      ctx.font = `bold ${baseFontSize * 1.1}px Arial`;
+      ctx.fillStyle = "#fbbf24";
+      const namePart = customerName ? `👤 ${customerName}` : "";
+      const cityPart = customerCity ? `  🏙 ${customerCity}` : "";
+      ctx.fillText(
+        `${namePart}${cityPart}`,
+        12,
+        H - barH + baseFontSize * 2.75,
+      );
+    }
+
+    // Date/time
+    const dateY =
+      customerName || customerCity
+        ? H - barH + baseFontSize * 4.0
+        : H - barH + baseFontSize * 2.8;
     ctx.font = `${baseFontSize}px Arial`;
     ctx.fillStyle = "#ffffff";
-    ctx.fillText(
-      `📅 ${formatDate(now)}   🕐 ${formatTime(now)}`,
-      12,
-      H - barH + baseFontSize * 2.8,
-    );
+    ctx.fillText(`📅 ${formatDate(now)}   🕐 ${formatTime(now)}`, 12, dateY);
 
+    // Location
     ctx.font = `${baseFontSize * 0.9}px Arial`;
     ctx.fillStyle = "#d1fae5";
     const maxLocWidth = W - 20;
@@ -180,16 +216,18 @@ export default function MadhavPhotoCapture() {
       loc = loc.slice(0, -2);
     }
     if (loc !== `📍 ${location}`) loc += "…";
-    ctx.fillText(loc, 12, H - barH + baseFontSize * 4.0);
+    ctx.fillText(loc, 12, dateY + baseFontSize * 1.3);
 
+    // Thank you
     ctx.font = `italic ${baseFontSize * 0.85}px Arial`;
     ctx.fillStyle = "#fbbf24";
     ctx.fillText(
       "Thank you! Welcome to Madhav Solar Family 🙏",
       12,
-      H - barH + baseFontSize * 5.1,
+      dateY + baseFontSize * 2.5,
     );
 
+    // Badge top-right
     const badgeW = Math.max(120, W * 0.3);
     const badgeH = Math.max(32, H * 0.07);
     ctx.fillStyle = "rgba(34,197,94,0.85)";
@@ -205,7 +243,7 @@ export default function MadhavPhotoCapture() {
     const dataUrl = canvas.toDataURL("image/jpeg", 0.92);
     setPhoto(dataUrl);
     stopCamera();
-  }, [location, stopCamera]);
+  }, [location, customerName, customerCity, stopCamera]);
 
   const downloadPhoto = useCallback(() => {
     if (!photo) return;
@@ -216,11 +254,18 @@ export default function MadhavPhotoCapture() {
   }, [photo]);
 
   const shareWhatsApp = useCallback(() => {
+    const nameLine = customerName ? `👤 Customer: ${customerName}` : "";
+    const cityLine = customerCity ? `🏙 City: ${customerCity}` : "";
+    const extras = [nameLine, cityLine].filter(Boolean).join("\n");
     const msg = encodeURIComponent(
-      `🌞 *MADHAV SOLAR ENERGY*\n📍 ${location}\n📅 ${formatDate(new Date())} 🕐 ${formatTime(new Date())}\n\nThank you! Welcome to Madhav Solar Family 🙏\n\nContact: ${MAULIK} | ${ASHWIN}`,
+      `🌞 *MADHAV SOLAR ENERGY*\n${extras ? `${extras}\n` : ""}📍 ${location}\n📅 ${formatDate(new Date())} 🕐 ${formatTime(new Date())}\n\nThank you! Welcome to Madhav Solar Family 🙏\n\nContact: ${MAULIK} | ${ASHWIN}`,
     );
     window.open(`https://wa.me/919428787879?text=${msg}`, "_blank");
-  }, [location]);
+  }, [location, customerName, customerCity]);
+
+  const filteredCities = GUJARAT_CITIES.filter((c) =>
+    c.toLowerCase().includes(cityInput.toLowerCase()),
+  );
 
   return (
     <section
@@ -243,6 +288,73 @@ export default function MadhavPhotoCapture() {
         </div>
 
         <div className="bg-gray-900/80 rounded-2xl border border-green-700/40 overflow-hidden shadow-2xl">
+          {/* Customer Name & City Fields */}
+          <div className="p-4 space-y-3 border-b border-green-700/30">
+            <div>
+              <label
+                htmlFor="customer-name-input"
+                className="block text-green-300 text-sm font-semibold mb-1"
+              >
+                Customer Name &nbsp;
+                <span className="text-green-500 font-normal text-xs">
+                  (ગ્રાહકનું નામ)
+                </span>
+              </label>
+              <input
+                id="customer-name-input"
+                type="text"
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+                placeholder="Enter customer name..."
+                data-ocid="photo.input"
+                className="w-full bg-gray-800 border border-green-700 text-white placeholder-gray-500 rounded-xl px-4 py-3 text-base focus:outline-none focus:border-green-400 focus:ring-1 focus:ring-green-400 transition-all"
+              />
+            </div>
+            <div className="relative">
+              <label
+                htmlFor="customer-city-input"
+                className="block text-green-300 text-sm font-semibold mb-1"
+              >
+                City &nbsp;
+                <span className="text-green-500 font-normal text-xs">
+                  (શહેર)
+                </span>
+              </label>
+              <input
+                id="customer-city-input"
+                type="text"
+                value={cityInput}
+                onChange={(e) => {
+                  setCityInput(e.target.value);
+                  setCustomerCity(e.target.value);
+                  setShowCityDropdown(true);
+                }}
+                onFocus={() => setShowCityDropdown(true)}
+                onBlur={() => setTimeout(() => setShowCityDropdown(false), 150)}
+                placeholder="Select or type city..."
+                data-ocid="photo.select"
+                className="w-full bg-gray-800 border border-green-700 text-white placeholder-gray-500 rounded-xl px-4 py-3 text-base focus:outline-none focus:border-green-400 focus:ring-1 focus:ring-green-400 transition-all"
+              />
+              {showCityDropdown && filteredCities.length > 0 && (
+                <ul className="absolute z-50 left-0 right-0 top-full mt-1 bg-gray-800 border border-green-700 rounded-xl overflow-hidden shadow-xl max-h-48 overflow-y-auto">
+                  {filteredCities.map((city) => (
+                    <li
+                      key={city}
+                      onMouseDown={() => {
+                        setCityInput(city);
+                        setCustomerCity(city);
+                        setShowCityDropdown(false);
+                      }}
+                      className="px-4 py-2.5 text-white hover:bg-green-700/50 cursor-pointer text-sm transition-colors"
+                    >
+                      {city}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+
           {cameraOpen && (
             <div className="relative">
               <video
@@ -256,6 +368,13 @@ export default function MadhavPhotoCapture() {
                 <div className="text-green-400 font-bold text-sm">
                   ☀ MADHAV SOLAR ENERGY
                 </div>
+                {(customerName || customerCity) && (
+                  <div className="text-yellow-300 text-xs font-semibold">
+                    {customerName && `👤 ${customerName}`}
+                    {customerName && customerCity && "  "}
+                    {customerCity && `🏙 ${customerCity}`}
+                  </div>
+                )}
                 <div className="text-gray-200">📍 {location}</div>
               </div>
             </div>
@@ -287,7 +406,6 @@ export default function MadhavPhotoCapture() {
           <canvas ref={canvasRef} className="hidden" />
 
           <div className="p-4 space-y-3">
-            {/* Retry button shown only if camera failed to auto-start */}
             {!cameraOpen && !photo && cameraError && (
               <button
                 type="button"
