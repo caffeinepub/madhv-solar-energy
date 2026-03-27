@@ -10,9 +10,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Clock, IndianRupee, Leaf, Sun, TrendingDown, Zap } from "lucide-react";
+import {
+  Clock,
+  IndianRupee,
+  Leaf,
+  Sun,
+  TrendingDown,
+  X,
+  Zap,
+} from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 // Gujarat PGVCL Cities
 const GUJARAT_CITIES = [
@@ -115,16 +123,21 @@ function fmt(n: number): string {
 
 export default function SolarCalculator() {
   const [bill1, setBill1] = useState("");
+  const [bill2, setBill2] = useState("");
   const [city, setCity] = useState("AMRELI");
   const [roofArea, setRoofArea] = useState("");
   const [result, setResult] = useState<CalcResult | null>(null);
+  const [showQuotation, setShowQuotation] = useState(false);
+  const quotationRef = useRef<HTMLDivElement>(null);
+
+  const b1 = Number.parseFloat(bill1) || 0;
+  const b2 = Number.parseFloat(bill2) || 0;
+  const avgBillPreview =
+    b1 > 0 && b2 > 0 ? (b1 + b2) / 2 : b1 > 0 ? b1 : b2 > 0 ? b2 : 0;
 
   function calculate() {
-    const b1 = Number.parseFloat(bill1);
-    if (!b1 || b1 <= 0) return;
-
-    const avgBill = b1;
-
+    if (avgBillPreview <= 0) return;
+    const avgBill = avgBillPreview;
     const monthlyUnits = calcUnitsFromBill(avgBill);
     const effectiveRate = getEffectiveRate(monthlyUnits);
 
@@ -161,11 +174,38 @@ export default function SolarCalculator() {
     });
   }
 
+  function handlePrint() {
+    window.print();
+  }
+
+  function handleWhatsApp() {
+    if (!result) return;
+    const msg = encodeURIComponent(
+      `🌞 SOLAR QUOTATION REQUEST\n\nCity: ${city}\nAvg Monthly Bill: ₹${fmt(result.avgBill)}\nRecommended System: ${result.systemKW} kW\nBase Cost: ₹${fmt(result.baseCost)}\nGovt Subsidy: -₹${fmt(result.subsidy)}\nFinal Cost: ₹${fmt(result.finalCost)}\nMonthly Savings: ₹${fmt(result.monthlySavings)}\nYearly Savings: ₹${fmt(result.yearlySavings)}\nPayback Period: ${result.payback.toFixed(1)} years\n\nPlease confirm this quotation. Thank you!`,
+    );
+    window.open(`https://wa.me/919428787879?text=${msg}`, "_blank");
+  }
+
+  const today = new Date().toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  });
+
   return (
     <section
       className="py-16 bg-gradient-to-b from-amber-50 to-orange-50"
       id="solar-calculator"
     >
+      {/* Print style — only quotation-print-area visible on print */}
+      <style>{`
+        @media print {
+          body * { visibility: hidden; }
+          #quotation-print-area, #quotation-print-area * { visibility: visible; }
+          #quotation-print-area { position: absolute; left: 0; top: 0; width: 100%; }
+        }
+      `}</style>
+
       <div className="max-w-5xl mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-10">
@@ -238,25 +278,68 @@ export default function SolarCalculator() {
         <Card className="shadow-xl border-2 border-orange-200 rounded-2xl overflow-hidden">
           <div className="bg-gradient-to-r from-orange-500 to-amber-500 h-1" />
           <CardContent className="p-6 md:p-8">
-            {/* Single Bill Input */}
-            <div className="mb-5 space-y-2">
-              <Label
-                htmlFor="bill-month1"
-                className="font-semibold text-gray-700 flex items-center gap-2"
-              >
-                <IndianRupee className="w-4 h-4 text-orange-500" />
-                Monthly Electricity Bill (₹)
-              </Label>
-              <Input
-                id="bill-month1"
-                type="number"
-                placeholder="e.g. 4500"
-                value={bill1}
-                onChange={(e) => setBill1(e.target.value)}
-                className="border-orange-200 focus-visible:ring-orange-400 text-lg"
-                data-ocid="calculator.input"
-              />
+            {/* Two-month Bill Inputs */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-4">
+              <div className="space-y-2">
+                <Label
+                  htmlFor="bill-month1"
+                  className="font-semibold text-gray-700 flex items-center gap-2"
+                >
+                  <IndianRupee className="w-4 h-4 text-orange-500" />
+                  Bill Month 1 (₹)
+                </Label>
+                <Input
+                  id="bill-month1"
+                  type="number"
+                  placeholder="e.g. 4500"
+                  value={bill1}
+                  onChange={(e) => setBill1(e.target.value)}
+                  className="border-orange-200 focus-visible:ring-orange-400 text-lg"
+                  data-ocid="calculator.input"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label
+                  htmlFor="bill-month2"
+                  className="font-semibold text-gray-700 flex items-center gap-2"
+                >
+                  <IndianRupee className="w-4 h-4 text-orange-500" />
+                  Bill Month 2 (₹)
+                </Label>
+                <Input
+                  id="bill-month2"
+                  type="number"
+                  placeholder="e.g. 5000"
+                  value={bill2}
+                  onChange={(e) => setBill2(e.target.value)}
+                  className="border-orange-200 focus-visible:ring-orange-400 text-lg"
+                  data-ocid="calculator.input"
+                />
+              </div>
             </div>
+
+            {/* Average Bill Badge */}
+            <AnimatePresence>
+              {avgBillPreview > 0 && (
+                <motion.div
+                  key="avg-badge"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="flex justify-center mb-5"
+                >
+                  <span className="bg-orange-100 text-orange-700 border border-orange-300 text-sm font-bold px-4 py-1.5 rounded-full inline-flex items-center gap-2">
+                    <IndianRupee className="w-4 h-4" />
+                    Average Bill: ₹{fmt(avgBillPreview)}
+                    {b1 > 0 && b2 > 0 && (
+                      <span className="text-xs font-normal text-orange-500 ml-1">
+                        (2 months avg)
+                      </span>
+                    )}
+                  </span>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
               <div className="space-y-2">
@@ -416,6 +499,17 @@ export default function SolarCalculator() {
                       2025-26. System size based on 150 units/kW/month,
                       ₹60,000/kW installation.
                     </p>
+
+                    {/* Generate Quotation Button */}
+                    <div className="mt-6">
+                      <Button
+                        onClick={() => setShowQuotation(true)}
+                        className="w-full bg-green-600 hover:bg-green-700 text-white font-bold text-base py-5 rounded-xl shadow-lg shadow-green-100 transition-all active:scale-95"
+                        data-ocid="calculator.open_modal_button"
+                      >
+                        📄 Generate Quotation
+                      </Button>
+                    </div>
                   </div>
                 </motion.div>
               )}
@@ -433,6 +527,245 @@ export default function SolarCalculator() {
           </a>
         </p>
       </div>
+
+      {/* Quotation Modal */}
+      <AnimatePresence>
+        {showQuotation && result && (
+          <motion.div
+            key="quotation-modal"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 z-50 flex items-start justify-center p-4 overflow-y-auto"
+            onClick={(e) =>
+              e.target === e.currentTarget && setShowQuotation(false)
+            }
+            data-ocid="calculator.modal"
+          >
+            <motion.div
+              initial={{ scale: 0.92, y: 30 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.92, y: 30 }}
+              transition={{ type: "spring", damping: 22, stiffness: 300 }}
+              className="w-full max-w-2xl my-6"
+            >
+              {/* Close Button */}
+              <div className="flex justify-end mb-2">
+                <button
+                  type="button"
+                  onClick={() => setShowQuotation(false)}
+                  className="bg-white text-gray-600 hover:text-red-500 rounded-full p-2 shadow-lg transition-colors"
+                  data-ocid="calculator.close_button"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Quotation Card */}
+              <div
+                id="quotation-print-area"
+                ref={quotationRef}
+                className="bg-white rounded-2xl shadow-2xl overflow-hidden border-2 border-green-400"
+              >
+                {/* Top accent bar */}
+                <div className="h-2 bg-gradient-to-r from-green-500 via-blue-500 to-green-500" />
+
+                {/* Header */}
+                <div className="flex items-center justify-between p-5 bg-gradient-to-r from-green-50 to-blue-50 border-b-2 border-green-100">
+                  <div className="flex items-center gap-3">
+                    <img
+                      src="/assets/uploads/images_1-019d2f59-5b0b-732a-9e31-6cc115d5193d-1.png"
+                      alt="Madhav Solar Energy Logo"
+                      className="w-16 h-16 object-contain rounded-xl border border-green-100 bg-white p-1"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = "none";
+                      }}
+                    />
+                    <div>
+                      <h1 className="text-lg font-extrabold text-green-700 leading-tight">
+                        MADHAV SOLAR ENERGY
+                      </h1>
+                      <p className="text-xs text-blue-600 font-semibold">
+                        ☀️ Authorized Waaree Franchise Partner
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right text-xs text-gray-600 leading-relaxed">
+                    <p className="font-semibold text-gray-800">
+                      Shop No. 11, First Floor
+                    </p>
+                    <p>IDFC Bank Building, Marketing Yard</p>
+                    <p>Amreli, Gujarat</p>
+                    <p className="mt-1">
+                      <a
+                        href="tel:+919428787879"
+                        className="text-green-700 font-semibold"
+                      >
+                        +91 94287 87879
+                      </a>
+                      {" | "}
+                      <a
+                        href="tel:+919574166656"
+                        className="text-green-700 font-semibold"
+                      >
+                        +91 95741 66656
+                      </a>
+                    </p>
+                  </div>
+                </div>
+
+                {/* Quotation Title */}
+                <div className="text-center py-4 bg-green-600">
+                  <h2 className="text-xl font-extrabold text-white tracking-widest">
+                    SOLAR SYSTEM QUOTATION
+                  </h2>
+                  <p className="text-green-100 text-xs mt-1">Date: {today}</p>
+                </div>
+
+                {/* Customer Info */}
+                <div className="grid grid-cols-2 gap-4 px-6 py-4 bg-gray-50 border-b border-gray-100">
+                  <div>
+                    <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide">
+                      City / Location
+                    </p>
+                    <p className="text-base font-bold text-gray-800">{city}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide">
+                      Avg. Monthly Bill
+                    </p>
+                    <p className="text-base font-bold text-orange-600">
+                      ₹{fmt(result.avgBill)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide">
+                      Recommended System
+                    </p>
+                    <p className="text-base font-bold text-blue-700">
+                      {result.systemKW} kW Solar System
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide">
+                      Est. Monthly Units
+                    </p>
+                    <p className="text-base font-bold text-gray-800">
+                      {result.monthlyUnits} units/month
+                    </p>
+                  </div>
+                </div>
+
+                {/* Itemized Table */}
+                <div className="px-6 py-4">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="bg-green-50 text-green-800">
+                        <th className="text-left p-3 rounded-l-lg font-bold">
+                          Description
+                        </th>
+                        <th className="text-right p-3 rounded-r-lg font-bold">
+                          Amount
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      <tr>
+                        <td className="p-3 text-gray-700">
+                          🌞 Solar System — {result.systemKW} kW (WAAREE TOPCON
+                          580W)
+                        </td>
+                        <td className="p-3 text-right font-semibold text-gray-800">
+                          {result.systemKW} kW
+                        </td>
+                      </tr>
+                      <tr className="bg-orange-50/50">
+                        <td className="p-3 text-gray-700">
+                          💼 Base Installation Cost (₹60,000/kW)
+                        </td>
+                        <td className="p-3 text-right font-semibold text-orange-700">
+                          ₹{fmt(result.baseCost)}
+                        </td>
+                      </tr>
+                      <tr className="bg-green-50/60">
+                        <td className="p-3 text-green-700 font-medium">
+                          🏛️ PM Surya Ghar Government Subsidy (-)
+                        </td>
+                        <td className="p-3 text-right font-bold text-green-700">
+                          - ₹{fmt(result.subsidy)}
+                        </td>
+                      </tr>
+                      <tr className="bg-gradient-to-r from-green-600 to-blue-600">
+                        <td className="p-3 text-white font-extrabold text-base rounded-l-lg">
+                          ✅ Final Cost After Subsidy
+                        </td>
+                        <td className="p-3 text-right text-white font-extrabold text-base rounded-r-lg">
+                          ₹{fmt(result.finalCost)}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="p-3 text-gray-700">
+                          💰 Monthly Savings (Estimated)
+                        </td>
+                        <td className="p-3 text-right font-semibold text-emerald-700">
+                          ₹{fmt(result.monthlySavings)}/month
+                        </td>
+                      </tr>
+                      <tr className="bg-emerald-50/50">
+                        <td className="p-3 text-gray-700">
+                          🎉 Yearly Savings (Estimated)
+                        </td>
+                        <td className="p-3 text-right font-semibold text-emerald-700">
+                          ₹{fmt(result.yearlySavings)}/year
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="p-3 text-gray-700">⏱️ Payback Period</td>
+                        <td className="p-3 text-right font-semibold text-amber-600">
+                          {result.payback.toFixed(1)} Years
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Footer Note */}
+                <div className="mx-6 mb-4 bg-blue-50 border border-blue-100 rounded-xl p-3 text-center">
+                  <p className="text-xs text-blue-700 font-semibold">
+                    ✅ Valid for 30 days &nbsp;|&nbsp; 🏠 Free Site Survey
+                    Included &nbsp;|&nbsp; 🌞 25-Year Panel Warranty
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    * Estimates based on PGVCL LT-2 rates 2025-26. Actual
+                    savings may vary.
+                  </p>
+                </div>
+
+                {/* Bottom accent */}
+                <div className="h-2 bg-gradient-to-r from-green-500 via-blue-500 to-green-500" />
+              </div>
+
+              {/* Action Buttons */}
+              <div className="grid grid-cols-2 gap-3 mt-4">
+                <Button
+                  onClick={handlePrint}
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg transition-all active:scale-95"
+                  data-ocid="calculator.secondary_button"
+                >
+                  ⬇️ Download Quotation
+                </Button>
+                <Button
+                  onClick={handleWhatsApp}
+                  className="bg-green-500 hover:bg-green-600 text-white font-bold py-4 rounded-xl shadow-lg transition-all active:scale-95"
+                  data-ocid="calculator.confirm_button"
+                >
+                  💬 Send on WhatsApp
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   );
 }

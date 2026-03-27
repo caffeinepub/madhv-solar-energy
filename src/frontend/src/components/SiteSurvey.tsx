@@ -27,7 +27,7 @@ import {
   Zap,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const GUJARAT_CITIES = [
   "AMRELI",
@@ -344,6 +344,11 @@ function Step2Camera({
   const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Auto-start camera on mount
+  useEffect(() => {
+    startCamera();
+  }, [startCamera]);
+
   const handleCapture = async () => {
     const file = await capturePhoto();
     if (file) {
@@ -355,6 +360,7 @@ function Step2Camera({
 
   const handleRetake = () => {
     setCapturedPhoto(null);
+    startCamera();
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -364,8 +370,6 @@ function Step2Camera({
       setCapturedPhoto(url);
     }
   };
-
-  const showOptions = !isActive && !isLoading && !capturedPhoto;
 
   return (
     <div className="space-y-5">
@@ -403,7 +407,7 @@ function Step2Camera({
         </motion.div>
       ) : (
         <div className="space-y-3">
-          {/* Camera preview when active */}
+          {/* Camera preview */}
           {(isActive || isLoading) && (
             <div
               className="relative rounded-2xl overflow-hidden bg-black shadow-lg"
@@ -427,44 +431,33 @@ function Step2Camera({
 
           <canvas ref={canvasRef} className="hidden" />
 
-          {error && (
+          {/* Camera error */}
+          {error && !isActive && !isLoading && (
             <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-red-600 text-sm text-center">
-              {error.message}
+              Camera access is needed. Please allow camera permission in your
+              browser settings.
             </div>
           )}
 
-          {/* Side-by-side options when camera not active */}
-          {showOptions && (
-            <div className="grid grid-cols-2 gap-3">
-              <Button
-                data-ocid="survey.camera.start_button"
-                onClick={startCamera}
-                className="h-20 flex-col gap-2 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-semibold"
-              >
-                <Camera className="w-6 h-6" />
-                <span className="text-sm">Open Camera</span>
-              </Button>
+          {/* Upload option — always visible when no photo captured */}
+          <Button
+            data-ocid="survey.camera.upload_button"
+            onClick={() => fileInputRef.current?.click()}
+            variant="outline"
+            className="w-full h-14 flex items-center justify-center gap-2 border-2 border-dashed border-blue-300 text-blue-600 hover:bg-blue-50 rounded-xl font-semibold"
+          >
+            <Upload className="w-5 h-5" />
+            <span>Upload Photo Instead</span>
+          </Button>
 
-              <Button
-                data-ocid="survey.camera.upload_button"
-                onClick={() => fileInputRef.current?.click()}
-                variant="outline"
-                className="h-20 flex-col gap-2 border-2 border-dashed border-blue-300 text-blue-600 hover:bg-blue-50 rounded-xl font-semibold"
-              >
-                <Upload className="w-6 h-6" />
-                <span className="text-sm">Upload Photo</span>
-              </Button>
-
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                capture="environment"
-                className="hidden"
-                onChange={handleFileUpload}
-              />
-            </div>
-          )}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="hidden"
+            onChange={handleFileUpload}
+          />
 
           {/* Capture button when camera is active */}
           {isActive && (
