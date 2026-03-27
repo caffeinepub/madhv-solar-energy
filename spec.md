@@ -1,29 +1,25 @@
 # MADHV Solar Energy
 
 ## Current State
-Full solar energy website with Hero, ProductShowcase, SolarCalculator (Gujarat PGVCL), Services, WhyChooseUs, Testimonials, Contact, Footer sections.
+WhatsApp chatbot exists as a floating button (bottom-right). It opens a panel with festival messages, marketing images, quick-reply buttons, and a text input. Users must manually open the chat.
 
 ## Requested Changes (Diff)
 
 ### Add
-- **Location Detection**: Auto-detect user's GPS location and show nearest PGVCL city match for the calculator
-- **Solar System Finder/Search**: Search tool where users can find suitable solar system packages by location, roof size, or bill amount
-- **Camera Feature (Site Survey)**: Camera-based site survey tool — user takes a photo of their roof/location, captures it as part of a solar installation plan
-- **Plan Maker with Picture**: After camera capture, generate a simple solar installation plan card showing: captured photo, recommended system size, cost estimate, and contact CTA — downloadable as a plan summary
+- Auto-open the chatbot after 4 seconds on first page visit (stored in sessionStorage so it doesn't re-open on every interaction)
+- A prominent "💬 Start Personal Chat" button inside the chatbot that opens WhatsApp directly with a personalized pre-filled message
+- Auto-open notification badge animation to draw attention
 
 ### Modify
-- SolarCalculator: Pre-fill city when location is detected
-- App.tsx: Add new SiteSurvey component
+- Chatbot floating button pulses/glows to indicate "new message" when auto-popup triggers
+- When the chatbot auto-opens, show a special "tap to chat" CTA message at the top
 
 ### Remove
-- Nothing removed
+Nothing removed.
 
 ## Implementation Plan
-1. Create `LocationDetector` utility hook using browser Geolocation API to detect coordinates and match to nearest Gujarat PGVCL city
-2. Create `SiteSurvey` component with:
-   - Step 1: Location detection (GPS button) + city display
-   - Step 2: Camera capture of roof/site using `useCamera` hook
-   - Step 3: Enter monthly bill or system size
-   - Step 4: Show Solar Plan card with captured photo + system recommendation + cost estimate
-   - Download plan as image/printable card
-3. Add `SiteSurvey` section to App.tsx between SolarCalculator and Services
+1. In WhatsAppChatbot.tsx: add sessionStorage flag `madhav_chat_shown` to control auto-open once per session
+2. useEffect on mount: after 4 seconds, if flag not set, setIsOpen(true) and set flag
+3. Add a `isAutoOpened` state to show a special intro message when auto-opened
+4. Add a full-width "💬 Send Personal Message on WhatsApp" button that opens wa.me with a personal Gujarati+English greeting pre-filled
+5. Keep all existing functionality intact
