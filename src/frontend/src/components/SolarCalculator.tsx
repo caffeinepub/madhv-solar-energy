@@ -752,6 +752,158 @@ export default function SolarCalculator() {
                   />
                 </div>
 
+                {/* Waaree TOPCON 580W Pricing Panel */}
+                <div className="mx-6 mb-4 overflow-x-auto">
+                  <p className="text-xs font-bold text-blue-800 mb-2 text-center uppercase tracking-wide">
+                    📊 Waaree TOPCON 580W — Complete Price Panel
+                  </p>
+                  <table className="w-full text-xs border-collapse">
+                    <thead>
+                      <tr className="bg-blue-700 text-white">
+                        <th className="px-2 py-1.5 text-left font-bold border border-blue-600">
+                          Panel
+                        </th>
+                        <th className="px-2 py-1.5 text-center font-bold border border-blue-600">
+                          KW
+                        </th>
+                        <th className="px-2 py-1.5 text-center font-bold border border-blue-600">
+                          Modules
+                        </th>
+                        <th className="px-2 py-1.5 text-center font-bold border border-blue-600">
+                          Cap(W)
+                        </th>
+                        <th className="px-2 py-1.5 text-right font-bold border border-blue-600">
+                          Rate/KW
+                        </th>
+                        <th className="px-2 py-1.5 text-right font-bold border border-blue-600">
+                          Total
+                        </th>
+                        <th className="px-2 py-1.5 text-right font-bold border border-blue-600">
+                          GST 8.9%
+                        </th>
+                        <th className="px-2 py-1.5 text-right font-bold border border-blue-600">
+                          Net Pay
+                        </th>
+                        <th className="px-2 py-1.5 text-right font-bold border border-blue-600">
+                          Subsidy
+                        </th>
+                        <th className="px-2 py-1.5 text-right font-bold bg-green-600 border border-green-500">
+                          After Sub ✅
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[
+                        {
+                          kw: 2.32,
+                          mod: 4,
+                          cap: 580,
+                          rateKw: "₹42,165",
+                          total: "₹97,823",
+                          gst: "₹8,706",
+                          netPay: "₹1,06,529",
+                          subsidy: "₹65,760",
+                          afterSub: "₹40,769",
+                        },
+                        {
+                          kw: 2.9,
+                          mod: 5,
+                          cap: 580,
+                          rateKw: "₹39,911",
+                          total: "₹1,15,745",
+                          gst: "₹10,301",
+                          netPay: "₹1,26,046",
+                          subsidy: "₹76,200",
+                          afterSub: "₹49,846",
+                        },
+                        {
+                          kw: 3.48,
+                          mod: 6,
+                          cap: 580,
+                          rateKw: "₹39,001",
+                          total: "₹1,35,725",
+                          gst: "₹12,079",
+                          netPay: "₹1,47,804",
+                          subsidy: "₹78,000",
+                          afterSub: "₹69,804",
+                        },
+                        {
+                          kw: 4.06,
+                          mod: 7,
+                          cap: 580,
+                          rateKw: "₹39,367",
+                          total: "₹1,59,833",
+                          gst: "₹14,225",
+                          netPay: "₹1,74,058",
+                          subsidy: "₹78,000",
+                          afterSub: "₹96,058",
+                        },
+                        {
+                          kw: 4.64,
+                          mod: 8,
+                          cap: 580,
+                          rateKw: "₹39,882",
+                          total: "₹1,85,054",
+                          gst: "₹16,470",
+                          netPay: "₹2,01,523",
+                          subsidy: "₹78,000",
+                          afterSub: "₹1,23,523",
+                        },
+                        {
+                          kw: 5.22,
+                          mod: 9,
+                          cap: 580,
+                          rateKw: "₹40,153",
+                          total: "₹2,09,598",
+                          gst: "₹18,654",
+                          netPay: "₹2,28,252",
+                          subsidy: "₹78,000",
+                          afterSub: "₹1,50,252",
+                        },
+                      ].map((row, i) => (
+                        <tr
+                          key={row.kw}
+                          className={`${i % 2 === 0 ? "bg-white" : "bg-blue-50/40"} ${Math.abs(result.systemKW - row.kw) < 0.1 ? "ring-2 ring-green-500 bg-green-50 font-bold" : ""}`}
+                        >
+                          <td className="px-2 py-1.5 border border-gray-200 text-blue-800 font-semibold">
+                            Waaree
+                          </td>
+                          <td className="px-2 py-1.5 border border-gray-200 text-center font-bold text-blue-900">
+                            {row.kw}
+                          </td>
+                          <td className="px-2 py-1.5 border border-gray-200 text-center">
+                            {row.mod}
+                          </td>
+                          <td className="px-2 py-1.5 border border-gray-200 text-center">
+                            {row.cap}
+                          </td>
+                          <td className="px-2 py-1.5 border border-gray-200 text-right">
+                            {row.rateKw}
+                          </td>
+                          <td className="px-2 py-1.5 border border-gray-200 text-right">
+                            {row.total}
+                          </td>
+                          <td className="px-2 py-1.5 border border-gray-200 text-right text-orange-600">
+                            {row.gst}
+                          </td>
+                          <td className="px-2 py-1.5 border border-gray-200 text-right font-semibold">
+                            {row.netPay}
+                          </td>
+                          <td className="px-2 py-1.5 border border-gray-200 text-right text-red-600">
+                            {row.subsidy}
+                          </td>
+                          <td className="px-2 py-1.5 border border-green-300 text-right font-extrabold text-green-700 bg-green-50">
+                            {row.afterSub}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <p className="text-xs text-gray-500 mt-1 text-center">
+                    * Highlighted row = your recommended system size
+                  </p>
+                </div>
+
                 {/* Itemized Table */}
                 <div className="px-6 py-4">
                   <table className="w-full text-sm">
