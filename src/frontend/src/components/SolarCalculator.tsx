@@ -127,6 +127,9 @@ function fmt(n: number): string {
 export default function SolarCalculator() {
   const [bill1, setBill1] = useState("");
   const [bill2, setBill2] = useState("");
+  const [customerName, setCustomerName] = useState("");
+  const [customerCity, setCustomerCity] = useState("");
+  const [customerMobile, setCustomerMobile] = useState("");
   const [city, setCity] = useState("AMRELI");
   const [roofArea, setRoofArea] = useState("");
   const [result, setResult] = useState<CalcResult | null>(null);
@@ -184,7 +187,7 @@ export default function SolarCalculator() {
   function handleWhatsApp() {
     if (!result) return;
     const msg = encodeURIComponent(
-      `🌞 SOLAR QUOTATION REQUEST\n\nCity: ${city}\nAvg Monthly Bill: ₹${fmt(result.avgBill)}\nRecommended System: ${result.systemKW} kW\nBase Cost: ₹${fmt(result.baseCost)}\nGovt Subsidy: -₹${fmt(result.subsidy)}\nFinal Cost: ₹${fmt(result.finalCost)}\nMonthly Savings: ₹${fmt(result.monthlySavings)}\nYearly Savings: ₹${fmt(result.yearlySavings)}\nPayback Period: ${result.payback.toFixed(1)} years\n\nPlease confirm this quotation. Thank you!`,
+      `🌞 SOLAR QUOTATION REQUEST\n\nCustomer: ${customerName || "N/A"}\nCity: ${customerCity || city}\nMobile: ${customerMobile || "N/A"}\n\nAvg Monthly Bill: ₹${fmt(result.avgBill)}\nRecommended System: ${result.systemKW} kW\nBase Cost: ₹${fmt(result.baseCost)}\nGovt Subsidy: -₹${fmt(result.subsidy)}\nFinal Cost: ₹${fmt(result.finalCost)}\nMonthly Savings: ₹${fmt(result.monthlySavings)}\nYearly Savings: ₹${fmt(result.yearlySavings)}\nPayback Period: ${result.payback.toFixed(1)} years\n\nPlease confirm this quotation. Thank you!`,
     );
     window.open(`https://wa.me/919428787879?text=${msg}`, "_blank");
   }
@@ -281,6 +284,58 @@ export default function SolarCalculator() {
         <Card className="shadow-xl border-2 border-orange-200 rounded-2xl overflow-hidden">
           <div className="bg-gradient-to-r from-orange-500 to-amber-500 h-1" />
           <CardContent className="p-6 md:p-8">
+            {/* Customer Details */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5 p-4 bg-orange-50 border border-orange-200 rounded-xl">
+              <div className="space-y-1">
+                <label
+                  htmlFor="cust-name"
+                  className="text-sm font-semibold text-gray-700"
+                >
+                  👤 Customer Name
+                </label>
+                <input
+                  id="cust-name"
+                  type="text"
+                  placeholder="e.g. Ramesh Patel"
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  className="w-full border border-orange-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                />
+              </div>
+              <div className="space-y-1">
+                <label
+                  htmlFor="cust-city"
+                  className="text-sm font-semibold text-gray-700"
+                >
+                  🏙️ City / Village
+                </label>
+                <input
+                  id="cust-city"
+                  type="text"
+                  placeholder="e.g. Amreli"
+                  value={customerCity}
+                  onChange={(e) => setCustomerCity(e.target.value)}
+                  className="w-full border border-orange-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                />
+              </div>
+              <div className="space-y-1">
+                <label
+                  htmlFor="cust-mobile"
+                  className="text-sm font-semibold text-gray-700"
+                >
+                  📱 Mobile Number
+                </label>
+                <input
+                  id="cust-mobile"
+                  type="tel"
+                  placeholder="e.g. 9876543210"
+                  value={customerMobile}
+                  onChange={(e) => setCustomerMobile(e.target.value)}
+                  className="w-full border border-orange-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                />
+              </div>
+            </div>
+
             {/* Two-month Bill Inputs */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-4">
               <div className="space-y-2">
@@ -626,36 +681,62 @@ export default function SolarCalculator() {
                 </div>
 
                 {/* Customer Info */}
-                <div className="grid grid-cols-2 gap-4 px-6 py-4 bg-gray-50 border-b border-gray-100">
-                  <div>
-                    <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide">
-                      City / Location
-                    </p>
-                    <p className="text-base font-bold text-gray-800">{city}</p>
+                <div className="px-6 py-4 bg-gray-50 border-b border-gray-100">
+                  <div className="grid grid-cols-2 gap-3 mb-3">
+                    {customerName && (
+                      <div>
+                        <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide">
+                          Customer Name
+                        </p>
+                        <p className="text-base font-bold text-gray-800">
+                          {customerName}
+                        </p>
+                      </div>
+                    )}
+                    {customerMobile && (
+                      <div>
+                        <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide">
+                          Mobile Number
+                        </p>
+                        <p className="text-base font-bold text-blue-700">
+                          {customerMobile}
+                        </p>
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide">
+                        City / Location
+                      </p>
+                      <p className="text-base font-bold text-gray-800">
+                        {customerCity || city}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide">
+                        Avg. Monthly Bill
+                      </p>
+                      <p className="text-base font-bold text-orange-600">
+                        ₹{fmt(result.avgBill)}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide">
-                      Avg. Monthly Bill
-                    </p>
-                    <p className="text-base font-bold text-orange-600">
-                      ₹{fmt(result.avgBill)}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide">
-                      Recommended System
-                    </p>
-                    <p className="text-base font-bold text-blue-700">
-                      {result.systemKW} kW Solar System
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide">
-                      Est. Monthly Units
-                    </p>
-                    <p className="text-base font-bold text-gray-800">
-                      {result.monthlyUnits} units/month
-                    </p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide">
+                        Recommended System
+                      </p>
+                      <p className="text-base font-bold text-blue-700">
+                        {result.systemKW} kW Solar System
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide">
+                        Est. Monthly Units
+                      </p>
+                      <p className="text-base font-bold text-gray-800">
+                        {result.monthlyUnits} units/month
+                      </p>
+                    </div>
                   </div>
                 </div>
 
