@@ -3,6 +3,15 @@ import { useCallback, useEffect, useRef, useState } from "react";
 const MAULIK = "+91 9428787879";
 const ASHWIN = "+91 95741 66656";
 
+const INCLUDED_ITEMS = [
+  "☀ Apollo ISI Hot Dip Galvanized Pipe",
+  "⚡ V-Sole Inverter (10 Year Warranty)",
+  "🔌 Polycab Wire 4sq mm",
+  "🛠 5 Year Free Service Support",
+  "📋 30 Year Module Output Warranty",
+  "📐 Structure: Front 3ft | Back 5ft Height",
+];
+
 const GUJARAT_CITIES = [
   "AMRELI",
   "RAJKOT",
@@ -98,9 +107,7 @@ export default function MadhavPhotoCapture() {
           audio: false,
         });
         setStream(s);
-        if (videoRef.current) {
-          videoRef.current.srcObject = s;
-        }
+        if (videoRef.current) videoRef.current.srcObject = s;
         setCameraOpen(true);
         setPhoto(null);
       } catch {
@@ -116,14 +123,11 @@ export default function MadhavPhotoCapture() {
   useEffect(() => {
     if (!autoStartedRef.current) {
       autoStartedRef.current = true;
-      setCameraError(null);
       navigator.mediaDevices
         ?.getUserMedia({ video: { facingMode: "environment" }, audio: false })
         .then((s) => {
           setStream(s);
-          if (videoRef.current) {
-            videoRef.current.srcObject = s;
-          }
+          if (videoRef.current) videoRef.current.srcObject = s;
           setCameraOpen(true);
           setPhoto(null);
         })
@@ -170,77 +174,106 @@ export default function MadhavPhotoCapture() {
 
     ctx.drawImage(video, 0, 0, W, H);
 
-    const barH = Math.max(90, H * 0.2);
-    ctx.fillStyle = "rgba(0,0,0,0.62)";
-    ctx.fillRect(0, H - barH, W, barH);
+    const baseFontSize = Math.max(11, W * 0.025);
+    const lineH = baseFontSize * 1.45;
+    // Calculate lines needed for bottom bar
+    const includedLines = INCLUDED_ITEMS.length;
+    const baseLines = 5; // title, name/city, date/time, location, thankyou
+    const totalLines = baseLines + includedLines;
+    const barH = Math.max(120, totalLines * lineH + 20);
 
+    // Bottom bar
+    ctx.fillStyle = "rgba(0,0,0,0.78)";
+    ctx.fillRect(0, H - barH, W, barH);
     ctx.fillStyle = "#22c55e";
     ctx.fillRect(0, H - barH, W, 3);
 
-    const now = new Date();
-    const baseFontSize = Math.max(11, W * 0.027);
+    let y = H - barH + lineH;
 
     // Title
-    ctx.font = `bold ${baseFontSize * 1.25}px Arial`;
+    ctx.font = `bold ${baseFontSize * 1.2}px Arial`;
     ctx.fillStyle = "#22c55e";
-    ctx.fillText("☀ MADHAV SOLAR ENERGY", 12, H - barH + baseFontSize * 1.45);
+    ctx.fillText("☀ MADHAV SOLAR ENERGY - AMRELI", 12, y);
+    y += lineH;
+
+    // Developer
+    ctx.font = `${baseFontSize * 0.85}px Arial`;
+    ctx.fillStyle = "#86efac";
+    ctx.fillText(`Developer: Maulik B Solanki  ${MAULIK}`, 12, y);
+    y += lineH;
 
     // Customer name & city
     if (customerName || customerCity) {
-      ctx.font = `bold ${baseFontSize * 1.1}px Arial`;
+      ctx.font = `bold ${baseFontSize}px Arial`;
       ctx.fillStyle = "#fbbf24";
       const namePart = customerName ? `👤 ${customerName}` : "";
       const cityPart = customerCity ? `  🏙 ${customerCity}` : "";
-      ctx.fillText(
-        `${namePart}${cityPart}`,
-        12,
-        H - barH + baseFontSize * 2.75,
-      );
+      ctx.fillText(`${namePart}${cityPart}`, 12, y);
+      y += lineH;
     }
 
     // Date/time
-    const dateY =
-      customerName || customerCity
-        ? H - barH + baseFontSize * 4.0
-        : H - barH + baseFontSize * 2.8;
+    const now = new Date();
     ctx.font = `${baseFontSize}px Arial`;
     ctx.fillStyle = "#ffffff";
-    ctx.fillText(`📅 ${formatDate(now)}   🕐 ${formatTime(now)}`, 12, dateY);
+    ctx.fillText(`📅 ${formatDate(now)}   🕐 ${formatTime(now)}`, 12, y);
+    y += lineH;
 
     // Location
-    ctx.font = `${baseFontSize * 0.9}px Arial`;
+    ctx.font = `${baseFontSize * 0.88}px Arial`;
     ctx.fillStyle = "#d1fae5";
     const maxLocWidth = W - 20;
     let loc = `📍 ${location}`;
-    while (ctx.measureText(loc).width > maxLocWidth && loc.length > 20) {
+    while (ctx.measureText(loc).width > maxLocWidth && loc.length > 20)
       loc = loc.slice(0, -2);
-    }
     if (loc !== `📍 ${location}`) loc += "…";
-    ctx.fillText(loc, 12, dateY + baseFontSize * 1.3);
+    ctx.fillText(loc, 12, y);
+    y += lineH;
+
+    // Divider
+    ctx.fillStyle = "#22c55e";
+    ctx.fillRect(12, y, W - 24, 1);
+    y += lineH * 0.6;
+
+    // Included items
+    ctx.font = `${baseFontSize * 0.82}px Arial`;
+    ctx.fillStyle = "#bbf7d0";
+    for (const item of INCLUDED_ITEMS) {
+      ctx.fillText(item, 12, y);
+      y += lineH * 0.95;
+    }
+    y += lineH * 0.3;
 
     // Thank you
-    ctx.font = `italic ${baseFontSize * 0.85}px Arial`;
+    ctx.font = `italic bold ${baseFontSize * 0.88}px Arial`;
     ctx.fillStyle = "#fbbf24";
-    ctx.fillText(
-      "Thank you! Welcome to Madhav Solar Family 🙏",
-      12,
-      dateY + baseFontSize * 2.5,
-    );
+    ctx.fillText("Thank you! Welcome to Madhav Solar Family 🙏", 12, y);
 
     // Badge top-right
-    const badgeW = Math.max(120, W * 0.3);
-    const badgeH = Math.max(32, H * 0.07);
-    ctx.fillStyle = "rgba(34,197,94,0.85)";
+    const badgeW = Math.max(130, W * 0.32);
+    const badgeH = Math.max(36, H * 0.075);
+    ctx.fillStyle = "rgba(34,197,94,0.88)";
     ctx.beginPath();
     ctx.roundRect(W - badgeW - 8, 8, badgeW, badgeH, 6);
     ctx.fill();
     ctx.font = `bold ${baseFontSize * 0.9}px Arial`;
     ctx.fillStyle = "#ffffff";
     ctx.textAlign = "center";
-    ctx.fillText("Madhav Solar Energy", W - badgeW / 2 - 8, 8 + badgeH * 0.68);
+    ctx.fillText(
+      "☀ Madhav Solar Energy",
+      W - badgeW / 2 - 8,
+      8 + badgeH * 0.45,
+    );
+    ctx.font = `${baseFontSize * 0.72}px Arial`;
+    ctx.fillStyle = "#d1fae5";
+    ctx.fillText(
+      "Structure: 3ft Front | 5ft Back",
+      W - badgeW / 2 - 8,
+      8 + badgeH * 0.82,
+    );
     ctx.textAlign = "left";
 
-    const dataUrl = canvas.toDataURL("image/jpeg", 0.92);
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.93);
     setPhoto(dataUrl);
     stopCamera();
   }, [location, customerName, customerCity, stopCamera]);
@@ -258,7 +291,7 @@ export default function MadhavPhotoCapture() {
     const cityLine = customerCity ? `🏙 City: ${customerCity}` : "";
     const extras = [nameLine, cityLine].filter(Boolean).join("\n");
     const msg = encodeURIComponent(
-      `🌞 *MADHAV SOLAR ENERGY*\n${extras ? `${extras}\n` : ""}📍 ${location}\n📅 ${formatDate(new Date())} 🕐 ${formatTime(new Date())}\n\nThank you! Welcome to Madhav Solar Family 🙏\n\nContact: ${MAULIK} | ${ASHWIN}`,
+      `🌞 *MADHAV SOLAR ENERGY - AMRELI*\n${extras ? `${extras}\n` : ""}📍 ${location}\n📅 ${formatDate(new Date())} 🕐 ${formatTime(new Date())}\n\n✅ Apollo ISI Hot Dip Galvanized Pipe\n✅ V-Sole Inverter (10 Year Warranty)\n✅ Polycab Wire 4sq mm\n✅ 5 Year Free Service Support\n✅ 30 Year Module Output Warranty\n✅ Structure: 3ft Front | 5ft Back Height\n\nThank you! Welcome to Madhav Solar Family 🙏\nDeveloper: Maulik B Solanki ${MAULIK} | ${ASHWIN}`,
     );
     window.open(`https://wa.me/919428787879?text=${msg}`, "_blank");
   }, [location, customerName, customerCity]);
@@ -282,8 +315,8 @@ export default function MadhavPhotoCapture() {
             Click Your Photo with Madhav Solar
           </h2>
           <p className="text-green-200 text-sm">
-            Take a photo — your name card with logo, date, time &amp; location
-            will be added automatically
+            Take a photo — logo, date, time, location &amp; all system details
+            will be stamped automatically
           </p>
         </div>
 
@@ -355,6 +388,27 @@ export default function MadhavPhotoCapture() {
             </div>
           </div>
 
+          {/* Included items preview */}
+          <div className="px-4 py-3 bg-green-900/30 border-b border-green-700/30">
+            <p className="text-green-400 text-xs font-bold mb-2">
+              📋 Photo Stamp Includes:
+            </p>
+            <div className="grid grid-cols-2 gap-1">
+              {INCLUDED_ITEMS.map((item) => (
+                <div
+                  key={item}
+                  className="text-green-200 text-xs flex items-start gap-1"
+                >
+                  <span className="text-green-400 mt-0.5">✓</span>
+                  <span>{item.replace(/^[^ ]+ /, "")}</span>
+                </div>
+              ))}
+            </div>
+            <p className="text-yellow-400 text-xs mt-2 font-semibold">
+              📐 Solar Panel Structure: Front 3 Feet | Back 5 Feet Height
+            </p>
+          </div>
+
           {cameraOpen && (
             <div className="relative">
               <video
@@ -364,9 +418,9 @@ export default function MadhavPhotoCapture() {
                 muted
                 className="w-full max-h-[360px] object-cover bg-black"
               />
-              <div className="absolute bottom-0 left-0 right-0 bg-black/60 px-4 py-2 text-xs text-white">
+              <div className="absolute bottom-0 left-0 right-0 bg-black/70 px-4 py-2 text-xs text-white">
                 <div className="text-green-400 font-bold text-sm">
-                  ☀ MADHAV SOLAR ENERGY
+                  ☀ MADHAV SOLAR ENERGY - AMRELI
                 </div>
                 {(customerName || customerCity) && (
                   <div className="text-yellow-300 text-xs font-semibold">
@@ -376,6 +430,9 @@ export default function MadhavPhotoCapture() {
                   </div>
                 )}
                 <div className="text-gray-200">📍 {location}</div>
+                <div className="text-green-300 text-xs mt-0.5">
+                  📐 Structure: 3ft Front | 5ft Back Height
+                </div>
               </div>
             </div>
           )}
@@ -486,6 +543,9 @@ export default function MadhavPhotoCapture() {
             </p>
             <p className="text-gray-400 text-xs mt-0.5">
               {MAULIK} &nbsp;|&nbsp; {ASHWIN}
+            </p>
+            <p className="text-gray-500 text-xs mt-0.5">
+              Developer: Maulik B Solanki | 9428787879
             </p>
           </div>
         </div>
