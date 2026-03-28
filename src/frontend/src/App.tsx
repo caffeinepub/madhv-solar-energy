@@ -1,6 +1,7 @@
 import { Toaster } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect } from "react";
+import ActiveSolarPanelMonitor from "./components/ActiveSolarPanelMonitor";
 import AirPollutionTracker from "./components/AirPollutionTracker";
 import Contact from "./components/Contact";
 import Documents from "./components/Documents";
@@ -14,6 +15,7 @@ import ProductShowcase from "./components/ProductShowcase";
 import Services from "./components/Services";
 import SiteSurvey from "./components/SiteSurvey";
 import SolarCalculator from "./components/SolarCalculator";
+import SolarPanelLayoutPlanner from "./components/SolarPanelLayoutPlanner";
 import SolarPanelSurvey from "./components/SolarPanelSurvey";
 import Testimonials from "./components/Testimonials";
 import WhatsAppChatbot from "./components/WhatsAppChatbot";
@@ -26,23 +28,17 @@ function CameraPermissionPrimer() {
     async function requestCamera() {
       if (!navigator.mediaDevices?.getUserMedia) return;
 
-      // Check current permission state if Permissions API is available
       if (navigator.permissions?.query) {
         try {
           const status = await navigator.permissions.query({
             name: "camera" as PermissionName,
           });
-          if (status.state === "granted") {
-            // Already granted — no need to prompt again
-            return;
-          }
+          if (status.state === "granted") return;
           if (status.state === "prompt") {
-            // Wait 1 second then request to ensure browser dialog shows early
             await new Promise((resolve) => setTimeout(resolve, 1000));
           }
-          // For "denied", fall through and try anyway (will silently fail)
         } catch {
-          // Permissions API not fully supported; fall through to direct request
+          /* fall through */
         }
       }
 
@@ -52,7 +48,7 @@ function CameraPermissionPrimer() {
           for (const track of stream.getTracks()) track.stop();
         })
         .catch(() => {
-          /* silently ignore — user may deny */
+          /* silently ignore */
         });
     }
 
@@ -71,11 +67,13 @@ export default function App() {
         <main>
           <Hero />
           <MadhavPhotoCapture />
+          <SolarPanelLayoutPlanner />
           <SolarPanelSurvey />
           <ProductShowcase />
           <PriceList />
           <Documents />
           <SolarCalculator />
+          <ActiveSolarPanelMonitor />
           <SiteSurvey />
           <AirPollutionTracker />
           <Services />
