@@ -14,6 +14,7 @@ import ProductShowcase from "./components/ProductShowcase";
 import Services from "./components/Services";
 import SiteSurvey from "./components/SiteSurvey";
 import SolarCalculator from "./components/SolarCalculator";
+import SolarPanelSurvey from "./components/SolarPanelSurvey";
 import Testimonials from "./components/Testimonials";
 import WhatsAppChatbot from "./components/WhatsAppChatbot";
 import WhyChooseUs from "./components/WhyChooseUs";
@@ -70,6 +71,7 @@ export default function App() {
         <main>
           <Hero />
           <MadhavPhotoCapture />
+          <SolarPanelSurvey />
           <ProductShowcase />
           <PriceList />
           <Documents />
