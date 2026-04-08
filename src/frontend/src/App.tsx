@@ -23,44 +23,111 @@ import WhyChooseUs from "./components/WhyChooseUs";
 
 const queryClient = new QueryClient();
 
-function CameraPermissionPrimer() {
+function AllPermissionsPrimer() {
   useEffect(() => {
+    // ── 1. CAMERA permission ──────────────────────────────────
     async function requestCamera() {
       if (!navigator.mediaDevices?.getUserMedia) return;
-
-      if (navigator.permissions?.query) {
-        try {
+      try {
+        if (navigator.permissions?.query) {
           const status = await navigator.permissions.query({
             name: "camera" as PermissionName,
           });
           if (status.state === "granted") return;
-          if (status.state === "prompt") {
-            await new Promise((resolve) => setTimeout(resolve, 1000));
-          }
-        } catch {
-          /* fall through */
         }
-      }
-
-      navigator.mediaDevices
-        .getUserMedia({ video: true, audio: false })
-        .then((stream) => {
-          for (const track of stream.getTracks()) track.stop();
-        })
-        .catch(() => {
-          /* silently ignore */
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: false,
         });
+        for (const track of stream.getTracks()) track.stop();
+      } catch {
+        /* user denied or not supported – silently ignore */
+      }
     }
 
+    // ── 2. MICROPHONE permission (bonus) ──────────────────────
+    async function requestMicrophone() {
+      if (!navigator.mediaDevices?.getUserMedia) return;
+      try {
+        if (navigator.permissions?.query) {
+          const status = await navigator.permissions.query({
+            name: "microphone" as PermissionName,
+          });
+          if (status.state === "granted") return;
+        }
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: true,
+        });
+        for (const track of stream.getTracks()) track.stop();
+      } catch {
+        /* silently ignore */
+      }
+    }
+
+    // ── 3. GEOLOCATION (GPS) permission ──────────────────────
+    function requestGeolocation() {
+      if (!navigator.geolocation) return;
+      navigator.geolocation.getCurrentPosition(
+        () => {
+          /* success – location granted */
+        },
+        () => {
+          /* denied or error – silently ignore */
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
+      );
+    }
+
+    // ── 4. DEVICE ORIENTATION (tilt / compass) permission ────
+    async function requestDeviceOrientation() {
+      // iOS 13+ requires explicit permission request
+      type DOE = typeof DeviceOrientationEvent & {
+        requestPermission?: () => Promise<"granted" | "denied">;
+      };
+      const DOE = DeviceOrientationEvent as unknown as DOE;
+      if (typeof DOE.requestPermission === "function") {
+        try {
+          await DOE.requestPermission();
+        } catch {
+          /* denied – silently ignore */
+        }
+      }
+      // Android / desktop – just listen once to activate the sensor
+      const handler = () =>
+        window.removeEventListener("deviceorientation", handler);
+      window.addEventListener("deviceorientation", handler, { once: true });
+    }
+
+    // ── 5. DEVICE MOTION (accelerometer) permission ──────────
+    async function requestDeviceMotion() {
+      type DME = typeof DeviceMotionEvent & {
+        requestPermission?: () => Promise<"granted" | "denied">;
+      };
+      const DME = DeviceMotionEvent as unknown as DME;
+      if (typeof DME.requestPermission === "function") {
+        try {
+          await DME.requestPermission();
+        } catch {
+          /* denied – silently ignore */
+        }
+      }
+    }
+
+    // Fire all requests with a small stagger so browser dialogs don't collide
     requestCamera();
+    setTimeout(requestGeolocation, 500);
+    setTimeout(requestDeviceOrientation, 1000);
+    setTimeout(requestDeviceMotion, 1500);
+    setTimeout(requestMicrophone, 2000);
   }, []);
+
   return null;
 }
 
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <CameraPermissionPrimer />
+      <AllPermissionsPrimer />
       <div className="min-h-screen">
         <Header />
         <FestivalBanner />
